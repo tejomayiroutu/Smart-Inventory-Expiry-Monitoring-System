@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up · Expiry Tracker{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-4 text-center">Create an account</h1>
+                    <form method="post" action="{{ url_for('auth.signup') }}" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required autocomplete="email"
+                                   placeholder="you@example.com">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                   autocomplete="new-password" minlength="8">
+                            <div class="form-text">Use at least 8 characters.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password_confirm" class="form-label">Confirm password</label>
+                            <input type="password" class="form-control" id="password_confirm" name="password_confirm" required
+                                   autocomplete="new-password" minlength="8">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3">Sign up</button>
+
+                        <p class="text-center text-muted small mb-0">
+                            Already have an account?
+                            <a href="{{ url_for('auth.login') }}">Log in</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

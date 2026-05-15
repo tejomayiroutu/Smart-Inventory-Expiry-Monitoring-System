@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == "add" %}Add product{% else %}Edit product{% endif %} · Expiry Tracker
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="mb-3">
+                <a class="text-decoration-none small" href="{{ url_for('products.list_products') }}">← Back to My products</a>
+            </div>
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-4">{% if mode == "add" %}Add product{% else %}Edit product{% endif %}</h1>
+
+                    {# Shown by JavaScript after Open Food Facts lookup (success / errors). #}
+                    <div id="offLookupAlert" class="alert d-none" role="alert"></div>
+
+                    <form method="post" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label for="barcode" class="form-label">Barcode <span class="text-muted">(optional)</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="barcode" name="barcode" maxlength="128"
+                                       value="{{ form_barcode }}" placeholder="e.g. 3017620422003" autocomplete="off">
+                                <button type="button" class="btn btn-outline-secondary" id="btnLookupBarcode">
+                                    Lookup product
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Fetches public data from <strong>Open Food Facts</strong> and fills fields below when found.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required maxlength="255"
+                                   value="{{ form_name }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="brand" class="form-label">Brand <span class="text-muted">(optional)</span></label>
+                            <input type="text" class="form-control" id="brand" name="brand" maxlength="255"
+                                   value="{{ form_brand }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ingredients" class="form-label">Ingredients <span class="text-muted">(optional)</span></label>
+                            <textarea class="form-control" id="ingredients" name="ingredients" rows="4"
+                                      placeholder="Often filled automatically from Open Food Facts">{{ form_ingredients }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category_name" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category_name" name="category_name"
+                                   maxlength="120" value="{{ form_category_name }}"
+                                   placeholder="e.g. Dairy, Medicine (optional)">
+                            <div class="form-text">Leave blank for no category. Typing a new name creates it for your account.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="manufacturing_date" class="form-label">Manufacturing date <span class="text-muted">(optional)</span></label>
+                                <input type="date" class="form-control" id="manufacturing_date" name="manufacturing_date"
+                                       value="{{ form_manufacturing_date }}">
+                                <div class="form-text">Used for shelf-life % on the dashboard. Leave blank for older products.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="expiry_date" class="form-label">Expiry date</label>
+                                <input type="date" class="form-control" id="expiry_date" name="expiry_date" required
+                                       value="{{ form_expiry_date }}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="0" step="1" required
+                                       value="{{ form_quantity }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                      placeholder="Optional details">{{ form_notes }}</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            {% if mode == "add" %}Save product{% else %}Update product{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            /**
+             * fetch() asks the browser to perform an HTTP request (like typing a URL,
+             * but from JavaScript). It returns a Promise. We await the response, then
+             * response.json() parses the body as JSON — the same shape Flask returns
+             * from jsonify({...}) in our /api/product-lookup/... route.
+             */
+            const btn = document.getElementById('btnLookupBarcode');
+            const barcodeInput = document.getElementById('barcode');
+            const alertBox = document.getElementById('offLookupAlert');
+            const nameInput = document.getElementById('name');
+            const brandInput = document.getElementById('brand');
+            const ingredientsInput = document.getElementById('ingredients');
+            const categoryInput = document.getElementById('category_name');
+
+            function showLookupAlert(category, message) {
+                alertBox.className = 'alert alert-' + category;
+                alertBox.textContent = message;
+                alertBox.classList.remove('d-none');
+            }
+
+            function hideLookupAlert() {
+                alertBox.classList.add('d-none');
+            }
+
+            if (!btn || !barcodeInput) return;
+
+            btn.addEventListener('click', async function () {
+                hideLookupAlert();
+                const code = (barcodeInput.value || '').trim().replace(/\s+/g, '');
+                if (!code || code.length < 4) {
+                    showLookupAlert('warning', 'Enter a barcode (at least 4 characters) before looking up.');
+                    return;
+                }
+
+                const url = '/api/product-lookup/' + encodeURIComponent(code);
+                btn.disabled = true;
+                try {
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+                    const ct = res.headers.get('content-type') || '';
+                    if (!ct.includes('application/json')) {
+                        showLookupAlert('danger', 'Unexpected response. Make sure you are logged in, then try again.');
+                        return;
+                    }
+                    const data = await res.json();
+                    if (data.success) {
+                        if (data.name) nameInput.value = data.name;
+                        if (data.brand) brandInput.value = data.brand;
+                        if (data.ingredients) ingredientsInput.value = data.ingredients;
+                        if (data.category && !categoryInput.value.trim()) {
+                            categoryInput.value = data.category;
+                        }
+                        showLookupAlert('success', 'Product found — fields were filled from Open Food Facts. Review and save.');
+                    } else {
+                        const msg = data.message || 'Lookup failed.';
+                        if (data.error === 'not_found') {
+                            showLookupAlert('warning', msg);
+                        } else {
+                            showLookupAlert('danger', msg);
+                        }
+                    }
+                } catch (e) {
+                    showLookupAlert('danger', 'Network error while contacting the server.');
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+        })();
+    </script>
+{% endblock %}

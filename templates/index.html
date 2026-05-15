@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Home · Expiry Tracker{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5 text-center">
+                    <h1 class="h3 mb-3">Welcome to Expiry Tracker</h1>
+                    {% if current_user.is_authenticated %}
+                        <p class="text-muted mb-3">You are signed in as <strong>{{ current_user.email }}</strong>.</p>
+                        <a class="btn btn-primary me-2" href="{{ url_for('dashboard.expiry_dashboard') }}">Expiry dashboard</a>
+                        <a class="btn btn-outline-primary" href="{{ url_for('products.list_products') }}">My products</a>
+                        <p class="text-muted small mt-3 mb-0">See what is expired, what is due soon, and counts by category.</p>
+                    {% else %}
+                        <p class="text-muted mb-4">Track expiry dates, get organized by category, and receive email reminders.</p>
+                        <a class="btn btn-primary me-2" href="{{ url_for('auth.signup') }}">Create an account</a>
+                        <a class="btn btn-outline-primary" href="{{ url_for('auth.login') }}">Log in</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

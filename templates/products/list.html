@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}My products · Expiry Tracker{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-0">My products</h1>
+            <p class="text-muted small mb-0">Only you can see these items. They are stored with your user id in the database.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('products.add_product') }}">Add product</a>
+    </div>
+
+    {% if products %}
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Expiry</th>
+                        <th scope="col">Freshness</th>
+                        <th scope="col" class="text-end">Shelf %</th>
+                        <th scope="col" class="text-end">Qty</th>
+                        <th scope="col">Notes</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for p in products %}
+                        {% set s = p|product_status %}
+                        <tr>
+                            <td class="fw-medium">{{ p.name }}</td>
+                            <td>
+                                {% if p.category %}
+                                    <span class="badge text-bg-secondary">{{ p.category.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ p.expiry_date.strftime("%Y-%m-%d") }}</td>
+                            <td><span class="badge text-bg-{{ s.badge }}">{{ s.status }}</span></td>
+                            <td class="text-end text-muted small">
+                                {% if s.percentage is not none %}
+                                    {{ "%.0f"|format(s.percentage) }}%
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ p.quantity }}</td>
+                            <td class="text-muted small">{{ (p.notes or "")[:80] }}{% if p.notes and p.notes|length > 80 %}…{% endif %}</td>
+                            <td class="text-end text-nowrap">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('products.edit_product', product_id=p.id) }}">Edit</a>
+                                <form class="d-inline" method="post"
+                                      action="{{ url_for('products.delete_product', product_id=p.id) }}"
+                                      onsubmit="return confirm('Delete this product?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <p class="text-muted mb-3">You have no products yet.</p>
+                <a class="btn btn-primary" href="{{ url_for('products.add_product') }}">Add your first product</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
