@@ -78,9 +78,9 @@ def send_daily_expiry_digests(app):
                 f"(Critical expiry window on the dashboard is still through {week_end.isoformat()}.)",
                 f"",
             ]
-            body_parts.append(_section_block("RED ALERTS (expired or expiring within 7 days)", red))
-            body_parts.append(_section_block("YELLOW ALERTS (shelf life >= 95% - not in red zone)", yellow))
-            body_parts.append(_section_block("GREEN ALERTS (shelf life 50-94% - not in red zone)", green))
+            body_parts.append(_section_block("RED ALERTS (95–100% shelf life used or expired/expiring within 7 days)", red))
+            body_parts.append(_section_block("YELLOW ALERTS (50–95% shelf life used)", yellow))
+            body_parts.append(_section_block("GREEN ALERTS (0–50% shelf life used)", green))
             body_parts.append("- Expiry Tracker")
 
             body = "\n".join(p for p in body_parts if p)

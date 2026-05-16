@@ -128,7 +128,7 @@
                         <div class="table-responsive">
                             <table class="table table-sm mb-0">
                                 <thead class="table-light">
-                                <tr><th>Name</th><th>Category</th><th>Expiry</th><th>Freshness</th><th class="text-end">Shelf %</th><th class="text-end">Qty</th></tr>
+                                <tr><th>Name</th><th>Category</th><th>Expiry</th><th>Days Left</th><th>Freshness</th><th class="text-end">Shelf %</th><th class="text-end">Qty</th></tr>
                                 </thead>
                                 <tbody>
                                 {% for p in expired_products %}
@@ -137,6 +137,7 @@
                                         <td><a href="{{ url_for('products.edit_product', product_id=p.id) }}">{{ p.name }}</a></td>
                                         <td>{% if p.category %}<span class="badge text-bg-secondary">{{ p.category.name }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
                                         <td class="text-danger">{{ p.expiry_date.strftime("%Y-%m-%d") }}</td>
+                                        <td><span class="text-danger">Expired {{ (-s.days_left) }} day{% if (-s.days_left) != 1 %}s{% endif %} ago</span></td>
                                         <td><span class="badge text-bg-{{ s.badge }}">{{ s.status }}</span></td>
                                         <td class="text-end text-muted small">{% if s.percentage is not none %}{{ "%.0f"|format(s.percentage) }}%{% else %}—{% endif %}</td>
                                         <td class="text-end">{{ p.quantity }}</td>
@@ -161,7 +162,7 @@
                         <div class="table-responsive">
                             <table class="table table-sm mb-0">
                                 <thead class="table-light">
-                                <tr><th>Name</th><th>Category</th><th>Expiry</th><th>Freshness</th><th class="text-end">Shelf %</th><th class="text-end">Qty</th></tr>
+                                <tr><th>Name</th><th>Category</th><th>Expiry</th><th>Days Left</th><th>Freshness</th><th class="text-end">Shelf %</th><th class="text-end">Qty</th></tr>
                                 </thead>
                                 <tbody>
                                 {% for p in soon_products %}
@@ -170,6 +171,15 @@
                                         <td><a href="{{ url_for('products.edit_product', product_id=p.id) }}">{{ p.name }}</a></td>
                                         <td>{% if p.category %}<span class="badge text-bg-secondary">{{ p.category.name }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
                                         <td>{{ p.expiry_date.strftime("%Y-%m-%d") }}</td>
+                                        <td>
+                                            {% if s.days_left < 0 %}
+                                                <span class="text-danger">Expired {{ (-s.days_left) }} day{% if (-s.days_left) != 1 %}s{% endif %} ago</span>
+                                            {% elif s.days_left == 0 %}
+                                                <span class="text-warning">Expires today</span>
+                                            {% else %}
+                                                <span class="text-success">{{ s.days_left }} day{% if s.days_left != 1 %}s{% endif %} left</span>
+                                            {% endif %}
+                                        </td>
                                         <td><span class="badge text-bg-{{ s.badge }}">{{ s.status }}</span></td>
                                         <td class="text-end text-muted small">{% if s.percentage is not none %}{{ "%.0f"|format(s.percentage) }}%{% else %}—{% endif %}</td>
                                         <td class="text-end">{{ p.quantity }}</td>
